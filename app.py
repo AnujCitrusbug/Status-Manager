@@ -258,7 +258,7 @@ def main() -> None:
             service = authenticate_drive()
 
             # Get or create main folder
-            main_folder_id = get_folder_id(service, "status") or create_folder(
+            main_folder_id = get_folder_id(service=service, folder_name=os.getenv("DRIVE_FOLDER_NAME")) or create_folder(
                 service, "status", email_addresses=os.getenv("EMAIL_ADDRESS").split(",")
             )
 

@@ -1,4 +1,5 @@
 import io
+import json
 import streamlit as st
 from datetime import datetime
 from googleapiclient.discovery import build
@@ -11,7 +12,22 @@ from typing import List, Optional
 load_dotenv()
 
 # Google Drive configuration
-SERVICE_ACCOUNT_FILE = "status-cred.json"
+SERVICE_ACCOUNT_FILE = {
+    "type": os.getenv("ACCOUNT_TYPE"),
+    "project_id": os.getenv("PROJECT_ID"),
+    "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+    "private_key": os.getenv("PRIVATE_KEY"),
+    "client_email": os.getenv("CLIENT_EMAIL"),
+    "client_id": os.getenv("CLIENT_ID"),
+    "auth_uri": os.getenv("AUTH_URI"),
+    "token_uri": os.getenv("TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+    "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
+    "universe_domain": os.getenv("UNIVERSE_DOMAIN"),
+}
+with open("./credentials.json", "w") as e:
+    e.write(json.dumps(SERVICE_ACCOUNT_FILE))
+
 SCOPES = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/documents",
@@ -27,7 +43,7 @@ def authenticate_drive() -> "build":
         build: The authenticated Google Drive API client.
     """
     credentials = Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES
+        "credentials.json", scopes=SCOPES
     )
     service = build("drive", "v3", credentials=credentials)
     return service

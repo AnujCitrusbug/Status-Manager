@@ -229,37 +229,25 @@ def save_status(service: "build", folder_id: str, file_name: str, content: str) 
             },
         ).execute()
 
-
-def main() -> None:
+    
+def submit() -> None:
     """
-    The main function for the Streamlit UI. It allows the user to select a profile,
-    enter a status, and save it to Google Drive.
+    Submits the status to Google Drive by creating or appending to a file
+    under a subfolder with the selected profile name, inside a main folder.
+    The file name is based on the selected date.
     """
-    st.title("Upwork Status Manager")
-
-    # Dropdown to select profile from predefined options
-    profiles = os.getenv("UPWORK_PROFILES").split(",")
-    selected_profile = st.selectbox("Select Profile", profiles)
-
-    # Date picker
-    today = datetime.today().date()
-    selected_date = st.date_input("Select Date", today)
-
-    # Text area for status
-    status = st.text_area("Write Status")
-
-    # Submit button
-    if st.button("Submit"):
-        if not status:
-            st.error("Status cannot be empty!")
-            return
-
+    if not status:
+        st.error("Status cannot be empty!")
+    else:
         try:
+            st.session_state.process_running = True
             service = authenticate_drive()
 
             # Get or create main folder
             main_folder_id = get_folder_id(service, "status") or create_folder(
-                service, "status", email_addresses=os.getenv("EMAIL_ADDRESS").split(",")
+                service,
+                "status",
+                email_addresses=os.getenv("EMAIL_ADDRESS").split(","),
             )
 
             # Get or create subfolder for the profile
@@ -274,9 +262,38 @@ def main() -> None:
             save_status(service, profile_folder_id, file_name, status)
 
             st.success("Status saved successfully!")
+            st.session_state.status_saved = f"Status saved for {selected_date}."
+            st.session_state.process_running = False
         except Exception as e:
             st.error(f"An error occurred: {e}")
-
+            st.session_state.process_running = False
 
 if __name__ == "__main__":
-    main()
+
+    # Initialize session state variables
+    if "status_saved" not in st.session_state:
+        st.session_state.status_saved = None
+    if "process_running" not in st.session_state:
+        st.session_state["process_running"] = False
+    
+    st.title("Upwork Status Manager")
+
+    # Dropdown to select profile from predefined options
+    profiles = os.getenv("UPWORK_PROFILES", "").split(",")
+    selected_profile = st.selectbox("Select Profile", profiles)
+
+    # Date picker
+    today = datetime.today().date()
+    selected_date = st.date_input("Select Date", today)
+
+    # Text area for status
+    status = st.text_area("Write Status", placeholder="Write your status here").strip()
+
+    # Form to submit status
+    review_form = st.form("status_form", clear_on_submit=True)
+    submit_button = review_form.form_submit_button(
+        label="Submit",
+        disabled=bool(st.session_state["process_running"]),
+        type="primary",
+        on_click=submit,
+    )

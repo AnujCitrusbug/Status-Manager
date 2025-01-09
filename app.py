@@ -11,6 +11,14 @@ from typing import List, Optional
 
 load_dotenv()
 
+# Initialize session state for navigation and process tracking
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "main"
+if "process_running" not in st.session_state:
+    st.session_state.process_running = False
+if "error_message" not in st.session_state:
+    st.session_state.error_message = None
+
 # Google Drive configuration
 SERVICE_ACCOUNT_FILE = {
     "type": os.getenv("ACCOUNT_TYPE"),
@@ -229,12 +237,10 @@ def save_status(service: "build", folder_id: str, file_name: str, content: str) 
             },
         ).execute()
 
-    
-def submit() -> None:
+
+def submit():
     """
-    Submits the status to Google Drive by creating or appending to a file
-    under a subfolder with the selected profile name, inside a main folder.
-    The file name is based on the selected date.
+    Handles the submission of the status and redirects to the confirmation page upon success.
     """
     if not status:
         st.error("Status cannot be empty!")
@@ -261,39 +267,40 @@ def submit() -> None:
             # Save status in a file (create or append)
             save_status(service, profile_folder_id, file_name, status)
 
-            st.success("Status saved successfully!")
-            st.session_state.status_saved = f"Status saved for {selected_date}."
-            st.session_state.process_running = False
+            # Redirect to confirmation page
+            st.session_state.current_page = "confirmation"
         except Exception as e:
             st.error(f"An error occurred: {e}")
             st.session_state.process_running = False
 
-if __name__ == "__main__":
 
-    # Initialize session state variables
-    if "status_saved" not in st.session_state:
-        st.session_state.status_saved = None
-    if "process_running" not in st.session_state:
-        st.session_state["process_running"] = False
-    
+# Page rendering logic
+if st.session_state.current_page == "main":
     st.title("Upwork Status Manager")
 
-    # Dropdown to select profile from predefined options
+    # Dropdown to select profile
     profiles = os.getenv("UPWORK_PROFILES", "").split(",")
-    selected_profile = st.selectbox("Select Profile", profiles)
+    selected_profile = st.selectbox("Select Profile / Project Name", profiles)
 
     # Date picker
     today = datetime.today().date()
-    selected_date = st.date_input("Select Date", today)
+    selected_date = st.date_input("Select Date", today, max_value=today)
 
     # Text area for status
     status = st.text_area("Write Status", placeholder="Write your status here").strip()
 
     # Form to submit status
-    review_form = st.form("status_form", clear_on_submit=True)
-    submit_button = review_form.form_submit_button(
-        label="Submit",
-        disabled=bool(st.session_state["process_running"]),
-        type="primary",
-        on_click=submit,
-    )
+    with st.form("status_form", clear_on_submit=True):
+        submit_button = st.form_submit_button(
+            label="Submit",
+            disabled=st.session_state.get("process_running"),
+            on_click=submit,
+        )
+
+elif st.session_state.current_page == "confirmation":
+    st.title("Status Confirmation")
+    st.success("Status saved successfully!")
+
+    # Button to return to the main page
+    if st.button("Go Back"):
+        st.session_state.current_page = "main"

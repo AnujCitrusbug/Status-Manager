@@ -240,51 +240,63 @@ def save_status(service: "build", folder_id: str, file_name: str, content: str) 
 
 def submit():
     """
-    Handles the submission of the status and redirects to the confirmation page upon success.
+    Handles the submission of the status and saves the file in Google Drive.
     """
     if not status:
         st.error("Status cannot be empty!")
-    else:
-        try:
-            st.session_state.process_running = True
-            service = authenticate_drive()
+        return
 
-            # Get or create main folder
-            main_folder_id = get_folder_id(service, "status") or create_folder(
-                service,
-                "status",
-                email_addresses=os.getenv("EMAIL_ADDRESS").split(","),
-            )
+    try:
+        st.session_state.process_running = True
+        service = authenticate_drive()
 
-            # Get or create subfolder for the profile
-            profile_folder_id = get_folder_id(
-                service, selected_profile, main_folder_id
-            ) or create_folder(service, selected_profile, main_folder_id)
+        # Get or create main folder
+        main_folder_id = get_folder_id(service, "status") or create_folder(
+            service,
+            "status",
+            email_addresses=os.getenv("EMAIL_ADDRESS").split(","),
+        )
 
-            # File name based on today's date
+        # Get or create subfolder for the profile
+        profile_folder_id = get_folder_id(
+            service, selected_profile, main_folder_id
+        ) or create_folder(service, selected_profile, main_folder_id)
+
+        # Handle file name based on status type
+        if status_type == "Daily":
             file_name = f"{selected_date}"
+        elif status_type == "Weekly":
+            start_date_str = start_date.strftime("%Y-%m-%d")
+            end_date_str = end_date.strftime("%Y-%m-%d")
+            file_name = f"Weekly_{start_date_str}_{end_date_str}"
 
-            # Save status in a file (create or append)
-            save_status(service, profile_folder_id, file_name, status)
+        # Save status in a file (create or append)
+        save_status(service, profile_folder_id, file_name, status)
 
-            # Redirect to confirmation page
-            st.session_state.current_page = "confirmation"
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-            st.session_state.process_running = False
-
+        # Redirect to confirmation page
+        st.session_state.current_page = "confirmation"
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+        st.session_state.process_running = False
 
 # Page rendering logic
 if st.session_state.current_page == "main":
-    st.title("Upwork Status Manager")
+    st.title("Employee Status Manager")
+
+    # Dropdown to select status type
+    status_type = st.selectbox("Select Status Type", ["Daily", "Weekly"])
 
     # Dropdown to select profile
     profiles = os.getenv("UPWORK_PROFILES", "").split(",")
     selected_profile = st.selectbox("Select Profile / Project Name", profiles)
 
-    # Date picker
     today = datetime.today().date()
-    selected_date = st.date_input("Select Date", today, max_value=today)
+    # Conditional form inputs based on status type
+    if status_type == "Daily":
+        selected_date = st.date_input("Select Date", today, max_value=today)
+    elif status_type == "Weekly":
+        start_date = st.date_input("Select Start Date", today, max_value=today)
+        end_date = st.date_input("Select End Date", today, max_value=today, min_value=start_date)
 
     # Text area for status
     status = st.text_area("Write Status", placeholder="Write your status here").strip()

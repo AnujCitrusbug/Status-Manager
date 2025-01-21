@@ -282,13 +282,25 @@ def submit():
 # Page rendering logic
 if st.session_state.current_page == "main":
     st.title("Employee Status Manager")
+    google_sheet_link = "https://docs.google.com/spreadsheets/d/1nBLO1SuCVlHWeZ9fGP6B0iLaZCuaTePdj5Bg8H9Gltw/edit?usp=sharing"
+    st.markdown(
+        f"""
+    <p style="font-size:16px;">
+        Here is the link to check the <b>Upwork profile account name</b> and <b>project list</b>: 
+        <a href="{google_sheet_link}" target="_blank" style="color:blue; text-decoration:underline;">View Profile List</a>
+    </p>
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Dropdown to select status type
     status_type = st.selectbox("Select Status Type", ["Daily", "Weekly"])
 
     # Dropdown to select profile
     profiles = os.getenv("UPWORK_PROFILES", "").split(",")
-    selected_profile = st.selectbox("Select Profile / Project Name", profiles)
+    selected_profile = st.selectbox(
+        "**Select Upwork Profile / Project Name**", profiles
+    )
 
     today = datetime.today().date()
     # Conditional form inputs based on status type
@@ -296,18 +308,22 @@ if st.session_state.current_page == "main":
         selected_date = st.date_input("Select Date", today, max_value=today)
     elif status_type == "Weekly":
         start_date = st.date_input("Select Start Date", today, max_value=today)
-        end_date = st.date_input("Select End Date", today, max_value=today, min_value=start_date)
+        end_date = st.date_input(
+            "Select End Date", today, max_value=today, min_value=start_date
+        )
 
     # Text area for status
     status = st.text_area("Write Status", placeholder="Write your status here").strip()
 
     # Form to submit status
     with st.form("status_form", clear_on_submit=True):
-        submit_button = st.form_submit_button(
-            label="Submit",
-            disabled=st.session_state.get("process_running"),
-            on_click=submit,
-        )
+        cols = st.columns([0.8, 0.15])
+        with cols[1]:
+            submit_button = st.form_submit_button(
+                label="Submit",
+                disabled=st.session_state.get("process_running"),
+                on_click=submit,
+            )
 
 elif st.session_state.current_page == "confirmation":
     st.title("Status Confirmation")

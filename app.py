@@ -281,7 +281,7 @@ def submit():
 
 # Page rendering logic
 if st.session_state.current_page == "main":
-    st.title("Employee Status Manager")
+    st.markdown("## 📝 Employee Status Manager")
     google_sheet_link = "https://docs.google.com/spreadsheets/d/1nBLO1SuCVlHWeZ9fGP6B0iLaZCuaTePdj5Bg8H9Gltw/edit?usp=sharing"
     st.markdown(
         f"""
@@ -294,18 +294,18 @@ if st.session_state.current_page == "main":
     )
 
     # Dropdown to select status type
-    status_type = st.selectbox("Select Status Type", ["Daily", "Weekly"])
+    status_type = st.selectbox("📅 Status Type", ["Daily", "Weekly"])
 
     # Dropdown to select profile
     profiles = os.getenv("UPWORK_PROFILES", "").split(",")
     selected_profile = st.selectbox(
-        "**Select Upwork Profile / Project Name**", profiles
+        "**👤 Upwork Profile / Project**", profiles
     )
 
     today = datetime.today().date()
     # Conditional form inputs based on status type
     if status_type == "Daily":
-        selected_date = st.date_input("Select Date", today, max_value=today)
+        selected_date = st.date_input("🗓️ Select Date", today, max_value=today)
     elif status_type == "Weekly":
         start_date = st.date_input("Select Start Date", today, max_value=today)
         end_date = st.date_input(
@@ -313,7 +313,7 @@ if st.session_state.current_page == "main":
         )
 
     # Text area for status
-    status = st.text_area("Write Status", placeholder="Write your status here").strip()
+    status = st.text_area("🧾 Write Your Status", placeholder="Write your status here").strip()
 
     # Form to submit status
     with st.form("status_form", clear_on_submit=True):

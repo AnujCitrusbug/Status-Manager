@@ -282,7 +282,7 @@ def submit():
 # Page rendering logic
 if st.session_state.current_page == "main":
     st.markdown("## 📝 Employee Status Manager")
-    google_sheet_link = "https://docs.google.com/spreadsheets/d/1nBLO1SuCVlHWeZ9fGP6B0iLaZCuaTePdj5Bg8H9Gltw/edit?usp=sharing"
+    google_sheet_link = "https://docs.google.com/spreadsheets/d/1kMm61TtYM4FPf6Z6HPPpbnvftQilFduh2TD-onSZxQA/edit?usp=sharing"
     st.markdown(
         f"""
     <p style="font-size:16px;">
